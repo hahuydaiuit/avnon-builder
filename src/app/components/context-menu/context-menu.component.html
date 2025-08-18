@@ -1,0 +1,14 @@
+<div
+  *ngIf="visible"
+  class="fixed z-50 bg-white border border-gray-300 rounded-md shadow-lg py-1 min-w-[120px]"
+  [style.left.px]="x"
+  [style.top.px]="y"
+  (click)="$event.stopPropagation()"
+>
+  <button
+    class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+    (click)="onApplyToAll()"
+  >
+    Apply to all
+  </button>
+</div>
