@@ -210,12 +210,33 @@ export class BudgetTableComponent implements OnInit {
         name = prompt('Enter new category name:');
       }
 
-      if (parentId) {
-        if (name) {
+      if (name) {
+        if (this.isExistName(name, currentCategory)) {
+          alert('Category with this name already exists under the selected parent.');
+          return;
+        }
+
+        if (parentId) {
           this.budgetService.addNewCategory(parentId, name, currentCategory.type, isParentCategory);
         }
       }
     }
+  }
+
+  /**
+   * Check if a category name already exists under the selected parent.
+   * @param name The name of the category.
+   * @param currentCategory The current budget category.
+   * @returns True if the category exists, false otherwise.
+   */
+  private isExistName(name: string, currentCategory: BudgetCategory): boolean {
+    return this.categories().some(
+      (cat) =>
+        cat.name === name &&
+        cat.parentId === currentCategory.parentId &&
+        cat.isParent === currentCategory.isParent &&
+        cat.type === currentCategory.type
+    );
   }
 
   /**

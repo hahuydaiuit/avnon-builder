@@ -131,7 +131,7 @@ export class BudgetService {
    */
   public addNewCategory(parentId: string, name: string, type: 'income' | 'expense', isParent: boolean): void {
     let newCategory: BudgetCategory = {
-      id: `new-${name.toLocaleLowerCase().replace(/\s+/g, '-')}`,
+      id: `${type}-${parentId}-${name.toLocaleLowerCase().replace(/\s+/g, '-')}`,
       name,
       type,
       parentId,
@@ -148,7 +148,7 @@ export class BudgetService {
         values: {},
       };
       newCategory = {
-        id: `${type}-${name.toLocaleLowerCase().replace(/\s+/g, '-')}-placeholder`,
+        id: `${type}-${newParentCategory.id}-${name.toLocaleLowerCase().replace(/\s+/g, '-')}-placeholder`,
         name: `Add new ${name} Category`,
         type,
         parentId: newParentCategory.id,
