@@ -2,13 +2,14 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ContextMenuComponent } from '@components/context-menu';
-import { ContextMenuData, BudgetCategory } from '@models/budget.models';
+import { ContextMenuData, BudgetCategory, MonthRange } from '@models/budget.models';
 import { BudgetService } from '@services/budget.service';
+import { BudgetFilterComponent } from '@components/budget-filter';
 
 @Component({
   selector: 'app-budget-table',
   standalone: true,
-  imports: [CommonModule, FormsModule, ContextMenuComponent],
+  imports: [CommonModule, FormsModule, BudgetFilterComponent, ContextMenuComponent],
   templateUrl: './budget-table.component.html',
   styles: [],
 })
@@ -18,10 +19,12 @@ export class BudgetTableComponent implements OnInit {
   public categories = this.budgetService.categories;
   public months = this.budgetService.months;
 
-  public startYear = 2025;
-  public startMonth = 1;
-  public endYear = 2025;
-  public endMonth = 12;
+  public monthRange: MonthRange = {
+    startYear: 2025,
+    startMonth: 1,
+    endYear: 2025,
+    endMonth: 12,
+  };
 
   public contextMenu = signal<ContextMenuData>({
     x: 0,
@@ -41,12 +44,7 @@ export class BudgetTableComponent implements OnInit {
     });
 
     // Ensure default month range
-    this.budgetService.updateMonthRange(
-      this.startYear,
-      this.startMonth,
-      this.endYear,
-      this.endMonth
-    );
+    this.budgetService.updateMonthRange(this.monthRange);
   }
 
   getIncomeCategories(): BudgetCategory[] {
@@ -94,9 +92,7 @@ export class BudgetTableComponent implements OnInit {
   }
 
   getFirstInputCategoryId(): string {
-    const firstCategory = this.categories().find(
-      (cat) => cat.type === 'income' && !cat.isParent && !cat.isPlaceholder
-    );
+    const firstCategory = this.categories().find((cat) => cat.type === 'income' && !cat.isParent && !cat.isPlaceholder);
     return firstCategory?.id || '';
   }
 
@@ -117,11 +113,7 @@ export class BudgetTableComponent implements OnInit {
    * @param {number} monthIndex The index of the budget month.
    * @param {BudgetCategory} category The budget category.
    */
-  onKeyDown(
-    event: KeyboardEvent,
-    monthIndex: number,
-    category: BudgetCategory
-  ): void {
+  onKeyDown(event: KeyboardEvent, monthIndex: number, category: BudgetCategory): void {
     if (event.key === 'Enter') {
       event.preventDefault();
       // Create new category row
@@ -163,17 +155,8 @@ export class BudgetTableComponent implements OnInit {
    * @param {BudgetCategory} category The budget category.
    * @param {string} monthKey The key of the budget month.
    */
-  onContextMenu(
-    event: MouseEvent,
-    category: BudgetCategory,
-    monthKey: string
-  ): void {
-    if (
-      category.isParent ||
-      category.isPlaceholder ||
-      (event.target as HTMLInputElement).value === ''
-    )
-      return;
+  onContextMenu(event: MouseEvent, category: BudgetCategory, monthKey: string): void {
+    if (category.isParent || category.isPlaceholder || (event.target as HTMLInputElement).value === '') return;
 
     event.preventDefault();
     this.contextMenu.set({
@@ -190,10 +173,7 @@ export class BudgetTableComponent implements OnInit {
    */
   onApplyToAll(): void {
     const currentContextMenu = this.contextMenu();
-    this.budgetService.applyToAll(
-      currentContextMenu.categoryId,
-      currentContextMenu.monthKey
-    );
+    this.budgetService.applyToAll(currentContextMenu.categoryId, currentContextMenu.monthKey);
     this.contextMenu.update((menu) => ({ ...menu, visible: false }));
   }
 
@@ -212,16 +192,11 @@ export class BudgetTableComponent implements OnInit {
    * @param {BudgetCategory} category The budget category.
    */
   public createNewCategory(category: BudgetCategory): void {
-    if (
-      (!category.isParent && !category.isPlaceholder) ||
-      !category.isPlaceholder
-    ) {
+    if ((!category.isParent && !category.isPlaceholder) || !category.isPlaceholder) {
       return;
     }
 
-    const currentCategory = this.categories().find(
-      (cat) => cat.id === category.id
-    );
+    const currentCategory = this.categories().find((cat) => cat.id === category.id);
     if (currentCategory) {
       // Find the parent category
       let parentId = currentCategory.parentId;
@@ -237,12 +212,7 @@ export class BudgetTableComponent implements OnInit {
 
       if (parentId) {
         if (name) {
-          this.budgetService.addNewCategory(
-            parentId,
-            name,
-            currentCategory.type,
-            isParentCategory
-          );
+          this.budgetService.addNewCategory(parentId, name, currentCategory.type, isParentCategory);
         }
       }
     }
@@ -253,17 +223,13 @@ export class BudgetTableComponent implements OnInit {
    * @param {string} currentCategoryId The ID of the current budget category.
    */
   private moveToNextRow(currentCategoryId: string): void {
-    const currentIndex = this.categories().findIndex(
-      (cat) => cat.id === currentCategoryId
-    );
-    let nextCategory: BudgetCategory | undefined =
-      this.categories()[currentIndex + 1];
+    const currentIndex = this.categories().findIndex((cat) => cat.id === currentCategoryId);
+    let nextCategory: BudgetCategory | undefined = this.categories()[currentIndex + 1];
 
     if (nextCategory && (nextCategory.isParent || nextCategory.isPlaceholder)) {
       // Skip to the next non-placeholder category
       nextCategory = this.categories().find(
-        (cat, index) =>
-          index > currentIndex && !cat.isPlaceholder && !cat.isParent
+        (cat, index) => index > currentIndex && !cat.isPlaceholder && !cat.isParent
       );
     }
     if (nextCategory) {
@@ -276,21 +242,14 @@ export class BudgetTableComponent implements OnInit {
    * @param {string} currentCategoryId The ID of the current budget category.
    * @param {number} monthIndex The index of the budget month.
    */
-  private moveToNextRowSameMonth(
-    currentCategoryId: string,
-    monthIndex: number
-  ): void {
-    const currentIndex = this.categories().findIndex(
-      (cat) => cat.id === currentCategoryId
-    );
-    let nextCategory: BudgetCategory | undefined =
-      this.categories()[currentIndex + 1];
+  private moveToNextRowSameMonth(currentCategoryId: string, monthIndex: number): void {
+    const currentIndex = this.categories().findIndex((cat) => cat.id === currentCategoryId);
+    let nextCategory: BudgetCategory | undefined = this.categories()[currentIndex + 1];
 
     if (nextCategory && (nextCategory.isParent || nextCategory.isPlaceholder)) {
       // Skip to the next non-placeholder category
       nextCategory = this.categories().find(
-        (cat, index) =>
-          index > currentIndex && !cat.isPlaceholder && !cat.isParent
+        (cat, index) => index > currentIndex && !cat.isPlaceholder && !cat.isParent
       );
     }
     if (nextCategory) {
@@ -303,30 +262,18 @@ export class BudgetTableComponent implements OnInit {
    * @param {string} currentCategoryId The ID of the current budget category.
    * @param {number} monthIndex The index of the budget month.
    */
-  private moveToPreviousRowSameMonth(
-    currentCategoryId: string,
-    monthIndex: number
-  ): void {
-    const currentIndex = this.categories().findIndex(
-      (cat) => cat.id === currentCategoryId
-    );
-    let previousCategory: BudgetCategory | undefined =
-      this.categories()[currentIndex - 1];
+  private moveToPreviousRowSameMonth(currentCategoryId: string, monthIndex: number): void {
+    const currentIndex = this.categories().findIndex((cat) => cat.id === currentCategoryId);
+    let previousCategory: BudgetCategory | undefined = this.categories()[currentIndex - 1];
 
-    if (
-      previousCategory &&
-      (previousCategory.isParent || previousCategory.isPlaceholder)
-    ) {
+    if (previousCategory && (previousCategory.isParent || previousCategory.isPlaceholder)) {
       // Skip to the next non-placeholder category
       previousCategory = this.categories().find(
-        (cat, index) =>
-          index < currentIndex && !cat.isPlaceholder && !cat.isParent
+        (cat, index) => index < currentIndex && !cat.isPlaceholder && !cat.isParent
       );
     }
     if (previousCategory) {
-      this.focusInput(
-        `input[data-tabindex="${previousCategory.id + monthIndex}"]`
-      );
+      this.focusInput(`input[data-tabindex="${previousCategory.id + monthIndex}"]`);
     }
   }
 
@@ -366,21 +313,16 @@ export class BudgetTableComponent implements OnInit {
   /**
    * Handle range change events in the budget table.
    */
-  onRangeChange(): void {
+  onRangeChange(monthRange: MonthRange): void {
     if (
-      this.endYear < this.startYear ||
-      (this.endYear === this.startYear && this.endMonth < this.startMonth)
+      monthRange.endYear < monthRange.startYear ||
+      (monthRange.endYear === monthRange.startYear && monthRange.endMonth < monthRange.startMonth)
     ) {
-      this.endYear = this.startYear;
-      this.endMonth = this.startMonth;
+      this.monthRange.endYear = monthRange.startYear;
+      this.monthRange.endMonth = monthRange.startMonth;
     }
 
-    this.budgetService.updateMonthRange(
-      this.startYear,
-      this.startMonth,
-      this.endYear,
-      this.endMonth
-    );
+    this.budgetService.updateMonthRange(monthRange);
   }
 
   /**

@@ -28,3 +28,15 @@ export interface ContextMenuData {
   monthKey: string;
   visible: boolean;
 }
+
+export interface MonthFilter {
+  value: number;
+  name: string;
+}
+
+export interface MonthRange {
+  startMonth: number;
+  startYear: number;
+  endMonth: number;
+  endYear: number;
+}

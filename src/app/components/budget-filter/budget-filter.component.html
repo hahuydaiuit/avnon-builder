@@ -1,0 +1,18 @@
+<div class="mb-4 flex items-center gap-2">
+  <label class="mr-1">Start:</label>
+  <select [(ngModel)]="monthRange.startMonth" (change)="onRangeChange()" class="border px-2 py-1">
+    <option [ngValue]="item.value" *ngFor="let item of months">
+      {{ item.name }}
+    </option>
+  </select>
+  <input type="number" [(ngModel)]="monthRange.startYear" (change)="onRangeChange()" class="border px-2 py-1 w-24" />
+
+  <span class="mx-2">to</span>
+
+  <select [(ngModel)]="monthRange.endMonth" (change)="onRangeChange()" class="border px-2 py-1">
+    <option [ngValue]="item.value" *ngFor="let item of months">
+      {{ item.name }}
+    </option>
+  </select>
+  <input type="number" [(ngModel)]="monthRange.endYear" (change)="onRangeChange()" class="border px-2 py-1 w-24" />
+</div>

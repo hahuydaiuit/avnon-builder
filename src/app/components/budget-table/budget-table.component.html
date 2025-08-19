@@ -1,68 +1,11 @@
-<div class="mb-4 flex items-center gap-2">
-  <label class="mr-1">Start:</label>
-  <select
-    [(ngModel)]="startMonth"
-    (change)="onRangeChange()"
-    class="border px-2 py-1"
-  >
-    <option [ngValue]="1">January</option>
-    <option [ngValue]="2">February</option>
-    <option [ngValue]="3">March</option>
-    <option [ngValue]="4">April</option>
-    <option [ngValue]="5">May</option>
-    <option [ngValue]="6">June</option>
-    <option [ngValue]="7">July</option>
-    <option [ngValue]="8">August</option>
-    <option [ngValue]="9">September</option>
-    <option [ngValue]="10">October</option>
-    <option [ngValue]="11">November</option>
-    <option [ngValue]="12">December</option>
-  </select>
-  <input
-    type="number"
-    [(ngModel)]="startYear"
-    (change)="onRangeChange()"
-    class="border px-2 py-1 w-24"
-  />
-
-  <span class="mx-2">to</span>
-
-  <select
-    [(ngModel)]="endMonth"
-    (change)="onRangeChange()"
-    class="border px-2 py-1"
-  >
-    <option [ngValue]="1">January</option>
-    <option [ngValue]="2">February</option>
-    <option [ngValue]="3">March</option>
-    <option [ngValue]="4">April</option>
-    <option [ngValue]="5">May</option>
-    <option [ngValue]="6">June</option>
-    <option [ngValue]="7">July</option>
-    <option [ngValue]="8">August</option>
-    <option [ngValue]="9">September</option>
-    <option [ngValue]="10">October</option>
-    <option [ngValue]="11">November</option>
-    <option [ngValue]="12">December</option>
-  </select>
-  <input
-    type="number"
-    [(ngModel)]="endYear"
-    (change)="onRangeChange()"
-    class="border px-2 py-1 w-24"
-  />
-</div>
+<app-budget-filter [monthRange]="monthRange" (rangeChange)="onRangeChange($event)"></app-budget-filter>
 
 <div class="overflow-x-auto">
   <table class="w-full border-collapse border border-gray-300 bg-white">
     <!-- Header Row -->
     <thead>
       <tr class="bg-gray-100">
-        <th
-          class="border border-gray-300 px-4 py-2 text-left font-semibold min-w-[200px]"
-        >
-          Category
-        </th>
+        <th class="border border-gray-300 px-4 py-2 text-left font-semibold min-w-[200px]">Category</th>
 
         <th
           *ngFor="let month of months()"
@@ -76,29 +19,16 @@
     <tbody>
       <!-- Income Section -->
       <tr class="bg-blue-50">
-        <td class="border border-gray-300 px-4 py-2 font-bold text-blue-800">
-          Income
-        </td>
+        <td class="border border-gray-300 px-4 py-2 font-bold text-blue-800">Income</td>
 
-        <td
-          *ngFor="let month of months()"
-          class="border border-gray-300 px-4 py-2"
-        ></td>
+        <td *ngFor="let month of months()" class="border border-gray-300 px-4 py-2"></td>
       </tr>
 
-      <ng-container
-        *ngFor="let category of getIncomeCategories(); trackBy: trackById"
-      >
+      <ng-container *ngFor="let category of getIncomeCategories(); trackBy: trackById">
         <tr [class]="getRowClass(category)">
-          <td
-            class="border border-gray-300 px-4 py-2"
-            [class]="getCellCategoryClass(category)"
-          >
+          <td class="border border-gray-300 px-4 py-2" [class]="getCellCategoryClass(category)">
             <div class="flex items-center justify-between">
-              <span
-                [class]="getCategoryNameClass(category)"
-                (click)="createNewCategory(category)"
-              >
+              <span [class]="getCategoryNameClass(category)" (click)="createNewCategory(category)">
                 {{ category.name }}
               </span>
               <button
@@ -114,9 +44,7 @@
           <td
             *ngFor="let month of months(); let monthIndex = index"
             class="border border-gray-300 px-4 py-2"
-            (contextmenu)="
-              onContextMenu($event, category, months()[monthIndex].key || '')
-            "
+            (contextmenu)="onContextMenu($event, category, months()[monthIndex].key || '')"
           >
             <input
               *ngIf="!category.isParent && !category.isPlaceholder"
@@ -130,9 +58,7 @@
               [attr.data-category]="category.id"
               [attr.data-tabindex]="category.id + monthIndex"
               [placeholder]="monthIndex === 0 ? '0' : ''"
-              [autofocus]="
-                monthIndex === 0 && category.id === getFirstInputCategoryId()
-              "
+              [autofocus]="monthIndex === 0 && category.id === getFirstInputCategoryId()"
             />
             <span
               *ngIf="category.isParent"
@@ -147,44 +73,27 @@
 
       <!-- Income Total -->
       <tr class="bg-blue-100">
-        <td class="border border-gray-300 px-4 py-2 font-bold text-blue-900">
-          Income Total
-        </td>
+        <td class="border border-gray-300 px-4 py-2 font-bold text-blue-900">Income Total</td>
 
-        <td
-          *ngFor="let month of months()"
-          class="border border-gray-300 px-4 py-2 font-bold text-blue-900 text-right"
-        >
-          {{ getTotal("income", month.key) }}
+        <td *ngFor="let month of months()" class="border border-gray-300 px-4 py-2 font-bold text-blue-900 text-right">
+          {{ getTotal('income', month.key) }}
         </td>
       </tr>
 
       <!-- Expenses Section -->
       <tr class="bg-red-50">
-        <td class="border border-gray-300 px-4 py-2 font-bold text-red-800">
-          Expenses
-        </td>
+        <td class="border border-gray-300 px-4 py-2 font-bold text-red-800">Expenses</td>
 
-        <td
-          *ngFor="let month of months()"
-          class="border border-gray-300 px-4 py-2"
-        ></td>
+        <td *ngFor="let month of months()" class="border border-gray-300 px-4 py-2"></td>
       </tr>
 
-      <ng-container
-        *ngFor="let category of getExpenseCategories(); trackBy: trackById"
-      >
+      <ng-container *ngFor="let category of getExpenseCategories(); trackBy: trackById">
         <tr [class]="getRowClass(category)">
-          <td
-            class="border border-gray-300 px-4 py-2"
-            [class]="getCellCategoryClass(category)"
-          >
+          <td class="border border-gray-300 px-4 py-2" [class]="getCellCategoryClass(category)">
             <div class="flex items-center justify-between">
-              <span
-                [class]="getCategoryNameClass(category)"
-                (click)="createNewCategory(category)"
-                >{{ category.name }}</span
-              >
+              <span [class]="getCategoryNameClass(category)" (click)="createNewCategory(category)">{{
+                category.name
+              }}</span>
               <button
                 *ngIf="!category.isPlaceholder && !category.isParent"
                 (click)="deleteCategory(category.id)"
@@ -198,9 +107,7 @@
           <td
             *ngFor="let month of months(); let monthIndex = index"
             class="border border-gray-300 px-4 py-2"
-            (contextmenu)="
-              onContextMenu($event, category, months()[monthIndex].key || '')
-            "
+            (contextmenu)="onContextMenu($event, category, months()[monthIndex].key || '')"
           >
             <input
               *ngIf="!category.isParent && !category.isPlaceholder"
@@ -228,23 +135,16 @@
 
       <!-- Expenses Total -->
       <tr class="bg-red-100">
-        <td class="border border-gray-300 px-4 py-2 font-bold text-red-900">
-          Total Expenses
-        </td>
+        <td class="border border-gray-300 px-4 py-2 font-bold text-red-900">Total Expenses</td>
 
-        <td
-          *ngFor="let month of months()"
-          class="border border-gray-300 px-4 py-2 font-bold text-red-900 text-right"
-        >
-          {{ getTotal("expense", month.key) }}
+        <td *ngFor="let month of months()" class="border border-gray-300 px-4 py-2 font-bold text-red-900 text-right">
+          {{ getTotal('expense', month.key) }}
         </td>
       </tr>
 
       <!-- Summary Section -->
       <tr class="bg-gray-100">
-        <td class="border border-gray-300 px-4 py-2 font-bold">
-          Profit / Loss
-        </td>
+        <td class="border border-gray-300 px-4 py-2 font-bold">Profit / Loss</td>
 
         <td
           *ngFor="let month of months()"
@@ -256,27 +156,17 @@
       </tr>
 
       <tr class="bg-gray-100">
-        <td class="border border-gray-300 px-4 py-2 font-bold">
-          Opening Balance
-        </td>
+        <td class="border border-gray-300 px-4 py-2 font-bold">Opening Balance</td>
 
-        <td
-          *ngFor="let month of months()"
-          class="border border-gray-300 px-4 py-2 font-bold text-right"
-        >
+        <td *ngFor="let month of months()" class="border border-gray-300 px-4 py-2 font-bold text-right">
           {{ getOpeningBalance(month.key) }}
         </td>
       </tr>
 
       <tr class="bg-gray-100">
-        <td class="border border-gray-300 px-4 py-2 font-bold">
-          Closing Balance
-        </td>
+        <td class="border border-gray-300 px-4 py-2 font-bold">Closing Balance</td>
 
-        <td
-          *ngFor="let month of months()"
-          class="border border-gray-300 px-4 py-2 font-bold text-right"
-        >
+        <td *ngFor="let month of months()" class="border border-gray-300 px-4 py-2 font-bold text-right">
           {{ getClosingBalance(month.key) }}
         </td>
       </tr>

@@ -1,5 +1,5 @@
 import { Injectable, signal, computed } from '@angular/core';
-import { BudgetData, BudgetMonth, BudgetCategory } from '@models/budget.models';
+import { BudgetData, BudgetMonth, BudgetCategory, MonthRange } from '@models/budget.models';
 import { defaultCategories } from './mock.data';
 
 @Injectable({
@@ -24,7 +24,7 @@ export class BudgetService {
    * Initialize default data for the budget service.
    */
   private initializeDefaultData(): void {
-    const months = this.generateMonths(2025, 1, 2025, 12);
+    const months = this.generateMonths({ startYear: 2025, startMonth: 1, endYear: 2025, endMonth: 12 });
     const categories = this.generateDefaultCategories();
 
     this.budgetData.set({
@@ -36,33 +36,23 @@ export class BudgetService {
 
   /**
    * Generate a list of months between the specified start and end dates.
-   * @param {number} startYear The starting year.
-   * @param {number} startMonth The starting month.
-   * @param {number} endYear The ending year.
-   * @param {number} endMonth The ending month.
-   * @returns {BudgetMonth[]} The list of budget months.
+   * @param monthRange The month range to generate months for.
+   * @returns A list of budget months.
    */
-  private generateMonths(
-    startYear: number,
-    startMonth: number,
-    endYear: number,
-    endMonth: number
-  ): BudgetMonth[] {
+  private generateMonths(monthRange: MonthRange): BudgetMonth[] {
     const months: BudgetMonth[] = [];
-    let currentYear = startYear;
-    let currentMonth = startMonth;
+    let currentYear = monthRange.startYear;
+    let currentMonth = monthRange.startMonth;
 
     while (
-      currentYear < endYear ||
-      (currentYear === endYear && currentMonth <= endMonth)
+      currentYear < monthRange.endYear ||
+      (currentYear === monthRange.endYear && currentMonth <= monthRange.endMonth)
     ) {
-      const monthKey = `${currentYear}-${currentMonth
-        .toString()
-        .padStart(2, '0')}`;
-      const monthLabel = new Date(
-        currentYear,
-        currentMonth - 1
-      ).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      const monthKey = `${currentYear}-${currentMonth.toString().padStart(2, '0')}`;
+      const monthLabel = new Date(currentYear, currentMonth - 1).toLocaleDateString('en-US', {
+        month: 'long',
+        year: 'numeric',
+      });
       months.push({
         key: monthKey,
         label: monthLabel,
@@ -93,15 +83,9 @@ export class BudgetService {
    * @param {string} monthKey The key of the budget month.
    * @param {number} value The new budget value.
    */
-  public updateValue(
-    categoryId: string,
-    monthKey: string,
-    value: number
-  ): void {
+  public updateValue(categoryId: string, monthKey: string, value: number): void {
     const currentData = this.budgetData();
-    const categoryIndex = currentData.categories.findIndex(
-      (cat) => cat.id === categoryId
-    );
+    const categoryIndex = currentData.categories.findIndex((cat) => cat.id === categoryId);
 
     if (categoryIndex !== -1) {
       const updatedCategories = [...currentData.categories];
@@ -127,9 +111,7 @@ export class BudgetService {
    */
   public applyToAll(categoryId: string, monthKey: string): void {
     const currentData = this.budgetData();
-    const category = currentData.categories.find(
-      (cat) => cat.id === categoryId
-    );
+    const category = currentData.categories.find((cat) => cat.id === categoryId);
 
     if (category && category.values[monthKey] !== undefined) {
       const value = category.values[monthKey];
@@ -147,12 +129,7 @@ export class BudgetService {
    * @param {('income' | 'expense')} type The type of the new category.
    * @param {boolean} isParent Whether the new category is a parent category.
    */
-  public addNewCategory(
-    parentId: string,
-    name: string,
-    type: 'income' | 'expense',
-    isParent: boolean
-  ): void {
+  public addNewCategory(parentId: string, name: string, type: 'income' | 'expense', isParent: boolean): void {
     let newCategory: BudgetCategory = {
       id: `new-${name.toLocaleLowerCase().replace(/\s+/g, '-')}`,
       name,
@@ -171,9 +148,7 @@ export class BudgetService {
         values: {},
       };
       newCategory = {
-        id: `${type}-${name
-          .toLocaleLowerCase()
-          .replace(/\s+/g, '-')}-placeholder`,
+        id: `${type}-${name.toLocaleLowerCase().replace(/\s+/g, '-')}-placeholder`,
         name: `Add new ${name} Category`,
         type,
         parentId: newParentCategory.id,
@@ -184,9 +159,7 @@ export class BudgetService {
     }
 
     const currentData = this.budgetData();
-    const parentIndex = currentData.categories.findIndex(
-      (cat) => cat.id === parentId
-    );
+    const parentIndex = currentData.categories.findIndex((cat) => cat.id === parentId);
 
     if (parentIndex !== -1) {
       const updatedCategories = [...currentData.categories];
@@ -196,22 +169,14 @@ export class BudgetService {
       for (let i = parentIndex + 1; i < updatedCategories.length; i++) {
         if (updatedCategories[i].parentId === parentId) {
           insertIndex = i;
-        } else if (
-          updatedCategories[i].isParent &&
-          updatedCategories[i].type === type
-        ) {
+        } else if (updatedCategories[i].isParent && updatedCategories[i].type === type) {
           // Stop when we hit the next parent category of the same type
           break;
         }
       }
 
       if (newParentCategory) {
-        updatedCategories.splice(
-          insertIndex,
-          0,
-          newParentCategory,
-          newCategory
-        );
+        updatedCategories.splice(insertIndex, 0, newParentCategory, newCategory);
       } else {
         updatedCategories.splice(insertIndex, 0, newCategory);
       }
@@ -229,9 +194,7 @@ export class BudgetService {
    */
   public deleteCategory(categoryId: string): void {
     const currentData = this.budgetData();
-    const updatedCategories = currentData.categories.filter(
-      (cat) => cat.id !== categoryId
-    );
+    const updatedCategories = currentData.categories.filter((cat) => cat.id !== categoryId);
 
     this.budgetData.set({
       ...currentData,
@@ -247,9 +210,7 @@ export class BudgetService {
    */
   public getSubTotal(categoryId: string, monthKey: string): number {
     const currentData = this.budgetData();
-    const parentCategory = currentData.categories.find(
-      (cat) => cat.id === categoryId
-    );
+    const parentCategory = currentData.categories.find((cat) => cat.id === categoryId);
 
     if (parentCategory && parentCategory.isParent) {
       return currentData.categories
@@ -272,10 +233,7 @@ export class BudgetService {
       (cat) => cat.type === type && !cat.isParent && !cat.isPlaceholder
     );
 
-    return filteredCategories.reduce(
-      (sum, cat) => sum + (cat.values[monthKey] || 0),
-      0
-    );
+    return filteredCategories.reduce((sum, cat) => sum + (cat.values[monthKey] || 0), 0);
   }
 
   /**
@@ -296,9 +254,7 @@ export class BudgetService {
    */
   public getOpeningBalance(monthKey: string): number {
     const currentData = this.budgetData();
-    const monthIndex = currentData.months.findIndex(
-      (month) => month.key === monthKey
-    );
+    const monthIndex = currentData.months.findIndex((month) => month.key === monthKey);
 
     if (monthIndex === 0) {
       return currentData.openingBalance;
@@ -321,23 +277,10 @@ export class BudgetService {
 
   /**
    * Update the month range for the budget.
-   * @param {number} startYear The start year of the budget.
-   * @param {number} startMonth The start month of the budget.
-   * @param {number} endYear The end year of the budget.
-   * @param {number} endMonth The end month of the budget.
+   * @param {MonthRange} monthRange The new month range.
    */
-  public updateMonthRange(
-    startYear: number,
-    startMonth: number,
-    endYear: number,
-    endMonth: number
-  ): void {
-    const months = this.generateMonths(
-      startYear,
-      startMonth,
-      endYear,
-      endMonth
-    );
+  public updateMonthRange(monthRange: MonthRange): void {
+    const months = this.generateMonths(monthRange);
     const currentData = this.budgetData();
 
     this.budgetData.set({
